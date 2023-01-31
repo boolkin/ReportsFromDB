@@ -12,8 +12,8 @@
     <input type="button" onclick="getDates()" value="Запросить"><hr>
     <iframe id="myframe"
     title="Inline Frame Example"
-    height="90%" width="100%"
-    src="http://127.0.0.1:8880/2023-01-24;2023-01-30">
+    height="900" width="100%"
+    src="http://127.0.0.1/test">
     </iframe>
 
 
@@ -25,7 +25,7 @@
         sendRequest(dateStart.toISOString().split('T')[0], dateEnd.toISOString().split('T')[0]);
         //sendRequest("2023-01-29", "2023-01-30");
         function sendRequest(dStart,dEnd){
-            document.getElementById("myframe").src = "http://127.0.0.1:8880/;"+ dStart +";"+ dEnd;
+            document.getElementById("myframe").src = location.href+";"+ dStart +";"+ dEnd;
             document.getElementById("start").value = dStart;
             document.getElementById("end").value = dEnd;
         }
