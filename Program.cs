@@ -1,4 +1,15 @@
-﻿using System;
+﻿// mkdir sqlite_app
+// cd sqlite_app
+// dotnet new console 
+// dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+
+//<ItemGroup>
+// <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" />
+//</ItemGroup>
+//
+//dotnet restore
+
+using System;
 using Microsoft.Data.Sqlite;
 using System.Net;
 using System.Collections.Generic;
@@ -38,15 +49,20 @@ namespace ReportDB
                 var path = System.IO.Path.GetDirectoryName(strExeFilePath);
                 try
                 {
-                    string[] dates = request.RawUrl.Split(';');
-                    string reply = connectToDb(dates[1], dates[2]);
-
+                    string[] req = request.RawUrl.Split(';');
+                    string reply = "";
+                    if (req[3] == "clear")
+                    {
+                        SQLrows.Clear();
+                    }
+                    reply = connectToDb(req[1], req[2]);
                     if (reply == "ok" || reply == "full")
                     {
                         responseString = buildTable();
                     }
 
-                    else {
+                    else
+                    {
                         responseString = reply;
                     }
                 }
@@ -74,7 +90,8 @@ namespace ReportDB
 
         static string buildTable()
         {
-            string htmlBlank = "<!doctype html><html lang='ru'><head><meta charset='utf-8'/><style>td{width:20%;}</style></head><body><h2 align='center'>Отчет по простоям</h2>";
+            Decimal pages = Math.Floor((Decimal)SQLrows.Count / 100) + 1;
+            string htmlBlank = "<!doctype html><html lang='ru'><head><meta charset='utf-8'/><style>td{width:20%;}</style></head><body><h2 align='center'>Отчет по простоям (" + pages + " стр.)</h2>";
             string table = "<table border='1' rules='all' align='center'><tr><th>Начало простоя</th><th>Конец простоя</th><th>Продолжительность</th></tr>";
             string allrows = " ";
             int i = 0;
