@@ -57,7 +57,8 @@
                 var arr = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
                 var arr2 = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
                 var dateArr = strDate.split(" ");
-                var newDate = new Date(dateArr[1] + "-" + arr2[arr.indexOf(dateArr[1])] + "-" + dateArr[0]);
+                var newDateStr = dateArr[2].replace(/\D/g,'') + "-" + arr2[arr.indexOf(dateArr[1])] + "-" + dateArr[0];
+                var newDate = new Date(newDateStr);
                 sendRequest(newDate.toISOString().split('T')[0], calendEnd, "");
             }
 
