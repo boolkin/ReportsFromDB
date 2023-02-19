@@ -1,15 +1,4 @@
-﻿// mkdir sqlite_app
-// cd sqlite_app
-// dotnet new console 
-// dotnet add package Microsoft.EntityFrameworkCore.Sqlite
-
-//<ItemGroup>
-// <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" />
-//</ItemGroup>
-//
-//dotnet restore
-
-using System;
+﻿using System;
 using Microsoft.Data.Sqlite;
 using System.Net;
 using System.Collections.Generic;
@@ -70,7 +59,7 @@ namespace ReportDB
                 {
                     try
                     {
-                        responseString = System.IO.File.ReadAllText(System.IO.Path.Join(path, "index.html"));
+                        responseString = System.IO.File.ReadAllText(System.IO.Path.Join(path, "/Resources/index.html"));
                     }
                     catch
                     {
@@ -117,7 +106,7 @@ namespace ReportDB
             // текущий каталог исполняемого файла
             string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             var path = System.IO.Path.GetDirectoryName(strExeFilePath);
-            string folder = System.IO.Path.Join(path, "/DataBases/");
+            string folder = System.IO.Path.Join(path, "/Resources/");
             System.IO.Directory.CreateDirectory(folder);
             //Use DB in project directory.  If it does not exist, create it:
             connectionStringBuilder.DataSource = System.IO.Path.Join(folder, "My.db");
