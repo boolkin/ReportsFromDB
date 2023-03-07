@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Text;
 using Microsoft.Data.Sqlite;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using System.Collections.Generic;
 
 namespace ReportDB
@@ -11,6 +14,17 @@ namespace ReportDB
         static int columns;
         static void Main(string[] args)
         {
+            try
+            {
+                // Получаем данные, необходимые для соединения
+                // Создаем поток для прослушивания
+                Thread tRec = new Thread(new ThreadStart(Receiver));
+                tRec.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n  " + ex.Message);
+            }
             CreateListener();
         }
 
@@ -144,27 +158,63 @@ namespace ReportDB
                     }
                     else
                     {
-                        var createTableCmd = connection.CreateCommand();
-                        createTableCmd.CommandText = "CREATE TABLE if not exists CGL_down (Downtime_start TEXT NOT NULL,Downtime_stop  TEXT NOT NULL, Downtime_dur   TEXT NOT NULL)";
-                        createTableCmd.ExecuteNonQuery();
-
-                        //Seed some data:
-                        using (var transaction = connection.BeginTransaction())
-                        {
-                            var insertCmd = connection.CreateCommand();
-                            insertCmd.CommandText = "INSERT INTO CGL_down VALUES('2023-01-31 10:00:00.000','2023-01-31 10:15:00.000','00:15:00.000')";
-                            insertCmd.ExecuteNonQuery();
-                            insertCmd.CommandText = "INSERT INTO CGL_down VALUES('2023-02-01 13:00:00.000','2023-02-01 13:10:00.000','00:10:00.000')";
-                            insertCmd.ExecuteNonQuery();
-                            insertCmd.CommandText = "INSERT INTO CGL_down VALUES('2023-02-01 20:30:00.000','2023-02-01 20:52:00.000','00:22:00.000')";
-                            insertCmd.ExecuteNonQuery();
-                            transaction.Commit();
-                        }
-                        connection.Close();
-                        return "Создана новая БД";
+                        return "Отсутствует БД";
                     }
                 }
 
+            }
+        }
+        public static void Receiver()
+        {
+            int localPort = 3310;
+            // Создаем UdpClient для чтения входящих данных
+            UdpClient receivingUdpClient = new UdpClient(localPort);
+            IPEndPoint RemoteIpEndPoint = null;
+
+            try
+            {
+                while (true)
+                {
+                    // Ожидание дейтаграммы
+                    byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
+
+                    // Преобразуем и отображаем данные
+                    string returnData = Encoding.UTF8.GetString(receiveBytes);
+                    //Console.WriteLine(" -> " + returnData.ToString());
+                    // можно убрать комментирование и тогда принятые данные будут показываться текстом в окне консоли
+                    try
+                    {
+                        var connectionStringBuilder = new SqliteConnectionStringBuilder();
+                        // текущий каталог исполняемого файла
+                        string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                        var path = System.IO.Path.GetDirectoryName(strExeFilePath);
+                        string folder = System.IO.Path.Join(path, "/Resources/");
+                        System.IO.Directory.CreateDirectory(folder);
+                        //Use DB in project directory.  If it does not exist, create it:
+                        connectionStringBuilder.DataSource = System.IO.Path.Join(folder, "My.db");
+                        using (var connection = new SqliteConnection(connectionStringBuilder.ConnectionString))
+                        {
+                            connection.Open();
+                            var insertToTbl = connection.CreateCommand();
+                            byte[] byteArray = receiveBytes;
+                            insertToTbl.CommandText = "CREATE TABLE if not exists raw_data (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, data BLOB)";
+                            insertToTbl.ExecuteNonQuery();
+                            insertToTbl.CommandText = "INSERT INTO raw_data (data) VALUES (@byteArray)";
+                            insertToTbl.Parameters.AddWithValue("@byteArray", byteArray);
+                            insertToTbl.ExecuteNonQuery();
+                            connection.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("SQL исключение: " + ex.ToString() + "\n  " + ex.Message);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n  " + ex.Message);
             }
         }
     }
